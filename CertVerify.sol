@@ -262,25 +262,6 @@ contract CertVerify is Ownable {
         emit StudentEmailUpdated(_email, _newEmail);
     }
     
-    function _bytes32ToString(
-       bytes32 _x
-       ) internal pure returns(string memory) 
-    {
-        bytes memory bytesString = new bytes(32);
-        uint charCount = 0;
-        for (uint j = 0; j < 32; j++) {
-            byte char = byte(bytes32(uint(_x) * 2 ** (8 * j)));
-            if (char != 0) {
-                bytesString[charCount] = char;
-                charCount++;
-            }
-        }
-        bytes memory bytesStringTrimmed = new bytes(charCount);
-        for (uint j = 0; j < charCount; j++) {
-            bytesStringTrimmed[j] = bytesString[j];
-        } 
-    }
-    
     function fetchStudent(
         string memory _email
         ) public view onlyValidStudents(_email) returns(
@@ -291,9 +272,9 @@ contract CertVerify is Ownable {
             uint16 assignmentIndex, 
             bool active)
     {
-        firstName = _bytes32ToString(students[studentsReverseMapping[_email]].firstName);
-        lastName = _bytes32ToString(students[studentsReverseMapping[_email]].lastName);
-        commendation = _bytes32ToString(students[studentsReverseMapping[_email]].commendation); 
+        firstName = bytes32ToString(students[studentsReverseMapping[_email]].firstName);
+        lastName = bytes32ToString(students[studentsReverseMapping[_email]].lastName);
+        commendation = bytes32ToString(students[studentsReverseMapping[_email]].commendation); 
         grade = students[studentsReverseMapping[_email]].grade;
         assignmentIndex = students[studentsReverseMapping[_email]].assignmentIndex;
         active = students[studentsReverseMapping[_email]].active;
@@ -396,6 +377,52 @@ contract CertVerify is Ownable {
         // Trigger EtherWithdrawn
         emit EtherWithdrawn(msg.sender, bal);
         return true;
+    }
+    
+        // STRING / BYTE CONVERSION
+    /**
+     * @dev Helper Function to convert string to bytes32 format
+     * @param _source is the string which needs to be converted
+     * @return result is the bytes32 representation of that string
+     */
+    function stringToBytes32(string memory _source) 
+    public pure 
+    returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(_source);
+        string memory tempSource = _source;
+        
+        if (tempEmptyStringTest.length == 0) {
+            return 0x0;
+        }
+    
+        assembly {
+            result := mload(add(tempSource, 32))
+        }
+    }
+    
+    /**
+     * @dev Helper Function to convert bytes32 to string format
+     * @param _x is the bytes32 format which needs to be converted
+     * @return result is the string representation of that bytes32 string
+     */
+    function bytes32ToString(bytes32 _x) 
+    public pure 
+    returns (string memory result) {
+        bytes memory bytesString = new bytes(32);
+        uint charCount = 0;
+        for (uint j = 0; j < 32; j++) {
+            byte char = byte(bytes32(uint(_x) * 2 ** (8 * j)));
+            if (char != 0) {
+                bytesString[charCount] = char;
+                charCount++;
+            }
+        }
+        bytes memory bytesStringTrimmed = new bytes(charCount);
+        for (uint j = 0; j < charCount; j++) {
+            bytesStringTrimmed[j] = bytesString[j];
+        }
+        
+        result = string(bytesStringTrimmed);
     }
 
 }
